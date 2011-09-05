@@ -14,6 +14,9 @@ Test::Mock::PSGI
 
 =head1 SYNOPSIS
 
+  use Test::Mock::PSGI;
+  use LWP::Simple;
+  
   my $mock = Test::Mock::PSGI->new;
   $mock->maps(
       'http://www.google.com/' => sub {
@@ -25,6 +28,12 @@ Test::Mock::PSGI
       my $session = $mock->session;
       is(get('http://www.google.com/'), 'gooogle');
       ok($session->verify);
+  };
+  
+  {
+      my $session = $mock->session;
+      ok(! get('http://www.amazon.com/'));
+      ok(! $session->verify);
   };
 
 =cut
