@@ -8,6 +8,27 @@ use Plack::App::URLMapWithPort;
 use Plack::App::Cascade;
 use Test::Mock::PSGI::Session;
 
+=head1 NAME
+
+Test::Mock::PSGI
+
+=head1 SYNOPSIS
+
+  my $mock = Test::Mock::PSGI->new;
+  $mock->maps(
+      'http://www.google.com/' => sub {
+          return [ 200, [], [ 'gooogle' ] ]
+      },
+  );
+  
+  {
+      my $session = $mock->session;
+      is(get('http://www.google.com/'), 'gooogle');
+      ok($session->verify);
+  };
+
+=cut
+
 sub new {
     my ($class, @rest) = @_;
 
@@ -59,5 +80,13 @@ sub session {
         $session;
     }
 }
+
+=head1 SEE ALSO
+
+=head2 Test::Mock::LWP
+
+=head2 Test::HTTP::Server::Simple
+
+=cut
 
 1;
