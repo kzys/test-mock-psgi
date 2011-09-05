@@ -6,6 +6,7 @@ __PACKAGE__->mk_ro_accessors(qw(_map unknown_requests));
 use LWP::Protocol::PSGI;
 use Plack::App::URLMapWithPort;
 use Plack::App::Cascade;
+use Test::Mock::PSGI::Session;
 
 sub new {
     my ($class, @rest) = @_;
@@ -30,22 +31,33 @@ sub maps {
     }
 }
 
-sub register {
-    my ($self) = @_;
+sub session {
+    my ($self, $code_ref) = @_;
 
-    my @unknown_requests;
-    $self->{unknown_requests} = \@unknown_requests;
+    my @unknown;
 
     my $cascade = Plack::App::Cascade->new;
     $cascade->add($self->_map->to_app);
     $cascade->add(
         sub {
             my ($env) = @_;
-            push @unknown_requests, $env;
+            push @unknown, $env;
             return [ 404, [], [ '' ] ];
         }
     );
-    LWP::Protocol::PSGI->register($cascade->to_app);
+
+    my $session = Test::Mock::PSGI::Session->new({
+        protocol => LWP::Protocol::PSGI->register($cascade->to_app),
+        unknown => \@unknown,
+    });
+    if ($code_ref) {
+        $code_ref->();
+        my $ok = $session->verify;
+        undef $session;
+        return $ok;
+    } else {
+        $session;
+    }
 }
 
 1;
